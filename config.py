@@ -2,6 +2,7 @@
 ClipForge Configuration
 """
 import os
+import sys
 from pathlib import Path
 
 # App Info
@@ -9,15 +10,41 @@ APP_NAME = "ClipForge"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "ClipForge Team"
 
-# Paths
-BASE_DIR = Path(__file__).parent
-ASSETS_DIR = BASE_DIR / "assets"
+# Detect if running as PyInstaller bundle
+def is_bundled():
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+# Paths - Handle both development and bundled execution
+if is_bundled():
+    # Running as .exe - use temp extraction path for readonly assets
+    BUNDLE_DIR = Path(sys._MEIPASS)
+    ASSETS_DIR = BUNDLE_DIR / "assets"
+    
+    # Use user's AppData for writable directories
+    if sys.platform == 'win32':
+        USER_DATA_DIR = Path(os.environ.get('LOCALAPPDATA', os.path.expanduser('~'))) / "ClipForge"
+    else:
+        USER_DATA_DIR = Path.home() / ".clipforge"
+    
+    TEMP_DIR = USER_DATA_DIR / "temp"
+    GENERATED_DIR = USER_DATA_DIR / "generated"
+else:
+    # Running in development
+    BASE_DIR = Path(__file__).parent
+    ASSETS_DIR = BASE_DIR / "assets"
+    USER_DATA_DIR = BASE_DIR
+    TEMP_DIR = BASE_DIR / "temp"
+    GENERATED_DIR = ASSETS_DIR / "generated"
+
 ICONS_DIR = ASSETS_DIR / "icons"
 FONTS_DIR = ASSETS_DIR / "fonts"
-TEMP_DIR = BASE_DIR / "temp"
 
-# Create temp directory if not exists
-TEMP_DIR.mkdir(exist_ok=True)
+# Create necessary directories
+for dir_path in [TEMP_DIR, GENERATED_DIR, USER_DATA_DIR]:
+    try:
+        dir_path.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"Warning: Could not create directory {dir_path}: {e}")
 
 # Video Settings
 DEFAULT_FPS = 30

@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
 
-from config import ASSETS_DIR, TEMP_DIR
+from config import TEMP_DIR, GENERATED_DIR, USER_DATA_DIR
 
 
 class AIProvider(Enum):
@@ -30,22 +30,28 @@ class AIConfig:
     @classmethod
     def load(cls) -> 'AIConfig':
         """Load config from file"""
-        config_path = ASSETS_DIR / "ai_config.json"
+        config_path = USER_DATA_DIR / "ai_config.json"
         if config_path.exists():
-            with open(config_path) as f:
-                data = json.load(f)
-                return cls(**data)
+            try:
+                with open(config_path) as f:
+                    data = json.load(f)
+                    return cls(**data)
+            except Exception:
+                pass
         return cls()
     
     def save(self):
         """Save config to file"""
-        config_path = ASSETS_DIR / "ai_config.json"
-        with open(config_path, 'w') as f:
-            json.dump({
-                'gemini_api_key': self.gemini_api_key,
-                'elevenlabs_api_key': self.elevenlabs_api_key,
-                'openai_api_key': self.openai_api_key
-            }, f)
+        config_path = USER_DATA_DIR / "ai_config.json"
+        try:
+            with open(config_path, 'w') as f:
+                json.dump({
+                    'gemini_api_key': self.gemini_api_key,
+                    'elevenlabs_api_key': self.elevenlabs_api_key,
+                    'openai_api_key': self.openai_api_key
+                }, f)
+        except Exception as e:
+            print(f"Could not save config: {e}")
 
 
 class GeminiService:
@@ -242,9 +248,12 @@ class AIAssistant:
         self.gemini = GeminiService(self.config.gemini_api_key)
         self.elevenlabs = ElevenLabsService(self.config.elevenlabs_api_key)
         
-        # Generated assets directory
-        self.generated_dir = ASSETS_DIR / "generated"
-        self.generated_dir.mkdir(exist_ok=True)
+        # Generated assets directory - use writable location
+        self.generated_dir = GENERATED_DIR
+        try:
+            self.generated_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(f"Warning: Could not create generated dir: {e}")
     
     def update_config(self, config: AIConfig):
         """Update API configuration"""
