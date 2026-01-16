@@ -1,0 +1,84 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install FFmpeg
+      run: |
+        choco install ffmpeg -y
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyQt6 pyinstaller pillow numpy ffmpeg-python
+    
+    - name: Create assets directories
+      run: |
+        mkdir -p assets/icons
+        mkdir -p assets/fonts
+        mkdir -p temp
+      shell: bash
+    
+    - name: Build EXE
+      run: |
+        pyinstaller --name ClipForge --onefile --windowed --add-data "ui/styles.qss;ui" --add-data "assets;assets" --hidden-import PyQt6 --hidden-import PIL main.py
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ClipForge-Windows
+        path: dist/ClipForge.exe
+        retention-days: 30
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install FFmpeg
+      run: |
+        brew install ffmpeg
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyQt6 pyinstaller pillow numpy ffmpeg-python
+    
+    - name: Create assets directories
+      run: |
+        mkdir -p assets/icons
+        mkdir -p assets/fonts
+        mkdir -p temp
+    
+    - name: Build App
+      run: |
+        pyinstaller --name ClipForge --onefile --windowed --add-data "ui/styles.qss:ui" --add-data "assets:assets" --hidden-import PyQt6 --hidden-import PIL main.py
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ClipForge-macOS
+        path: dist/ClipForge
+        retention-days: 30

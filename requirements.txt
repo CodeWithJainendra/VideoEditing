@@ -1,0 +1,21 @@
+# Core UI Framework
+PyQt6>=6.6.0
+PyQt6-Qt6>=6.6.0
+
+# Multimedia
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# FFmpeg Python wrapper
+ffmpeg-python>=0.2.0
+
+# Video/Audio processing
+moviepy>=1.0.3
+pydub>=0.25.1
+
+# Build tools
+pyinstaller>=6.0.0
+
+# Utilities
+python-dotenv>=1.0.0
